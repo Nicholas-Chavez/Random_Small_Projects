@@ -1,0 +1,171 @@
+---
+title: "Cross_Validation_mtcars"
+author: "Nicholas Chavez"
+format: pdf
+---
+
+---
+title: "Cross_Validation_Mtcars"
+author: "Nicholas Chavez"
+format: pdf
+---
+### Load Packages
+```{r}
+library(tidyverse)
+```
+
+## Objective: Use the mtcars data set to find the best regression to predict miles per gallon
+
+```{r}
+plot(mtcars)
+```
+When looking at the combinations of graphs we can see potential relationships. There are negative linear associations with mpg and the following variables:
+cyl: Number of cylinders
+disp: Displacement
+hp: Gross horsepower 
+carb: Number of carburetors
+wt: Weight (1000 lbs)
+There also seems to be potential correlation with drat (Rear axle ratio)and qsec (1/4 mile time)but they aren't as apparent. 
+
+## Double checking weaker associations:
+### qsec: 1/4 mile time
+
+```{r}
+ggplot(mtcars, aes(qsec, mpg))+ 
+  geom_point()+
+  geom_smooth(method = "lm")
+```
+
+There is a positive association however the points do have a bit of heteroscedasticity.
+### drat: Rear axle ratio
+
+```{r}
+ggplot(mtcars, aes(drat, mpg))+ 
+  geom_point()+
+  geom_smooth(method = "lm")
+```
+We can also see a positive correlation with drat as well. In this analysis I will make multiple regression and evaluate each regression using cross-validation to determine which is the best fit.
+
+## Create a measure of better fit
+
+```{r}
+RMSE <- function(y,yhat){
+  sqrt(mean((y-yhat)^2))
+}
+```
+
+## Split the data into a 70% training and 30% test set
+```{r}
+set.seed(101)
+n <- nrow(mtcars)
+train_index <- sample(1:n, round(n*0.7))
+mt_train <- mtcars[train_index,]
+mt_test <- mtcars[-train_index,]
+```
+
+## Create regression models (Note for this analysis I chose to not include variables that only have two categories)
+lm1: regression with only negative relations
+lm2: regression including both postive and negative relations
+lm3: regression including negative relations, excluding weak relation carb
+lm4: regression including only positive relations
+
+```{r}
+lm1 <- lm(mpg ~ cyl + disp + hp + carb + wt, data = mtcars)
+lm2 <- lm(mpg ~ cyl + disp + hp + carb + wt + drat + qsec, data = mtcars)
+lm3 <- lm(mpg ~ cyl + disp + hp + wt, data = mtcars)
+lm4 <- lm(mpg ~ drat + qsec, data = mtcars)
+```
+
+## Make predictions: 
+```{r}
+pred1 <- predict(lm1, newdata = mt_test)
+pred2 <- predict(lm2, newdata = mt_test)
+pred3 <- predict(lm3, newdata = mt_test)
+pred4 <- predict(lm4, newdata = mt_test)
+```
+
+## Computing RMSE:
+RMSE for lm1
+```{r}
+RMSE(mt_test$mpg, pred1)
+```
+RMSE lm2
+```{r}
+RMSE(mt_test$mpg, pred2)
+```
+RMSElm3
+```{r}
+RMSE(mt_test$mpg, pred3)
+```
+RMSE lm4
+```{r}
+RMSE(mt_test$mpg, pred4)
+```
+Through the RMSE we can see that lm2 or the regression that included all the related variables seems to have the best fit of the data.
+
+## Plot the best fitting regression:
+```{r}
+pred_df <- data.frame(
+  Actual = mt_test$mpg,
+  Pred2 = pred2
+)
+```
+
+```{r}
+ggplot(data = pred_df, aes(x = Actual,y = Pred2))+
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE )
+```
+# Single evaluation:
+After determining that it is the best fit of those regression models, now I will determine how good of a fit is its and potiental use some methods to adjust the regression.
+
+```{r}
+plot(lm2)
+```
+Through viewing these diagnostic plots it can see that linearity, Normality of errors and Homoskedasticity could all be better. Therefore I will attempt to fix these issues using Box-Cox method.
+
+### Load packages
+```{r}
+library(dplyr)
+library(MASS)
+```
+
+## Box-Cox Transformation
+```{r}
+bc = boxcox(lm2, lambda = seq(-3,3))
+best.lam = bc$x[which(bc$y==max(bc$y))]
+```
+```{r}
+if(abs(best.lam)<0.4) {
+  lm2.transformed <- lm(log(mpg) ~ cyl + disp + hp + carb + wt + drat + qsec, data = mtcars)
+} else {
+  lm2.transformed <- lm(((mpg^best.lam - 1)/best.lam) ~ cyl + disp + hp + carb + wt + drat + qsec, data = mtcars)
+}
+```
+
+## Diagnostic on new transformation
+```{r}
+plot(lm2.transformed)
+```
+```{r}
+#compare model preformance
+cat("Original Model - Adjusted R-squared:", summary(lm2)$adj.r.squared, "\n")
+cat("Transformed Model - Adjusted R-squared:", summary(lm2.transformed)$adj.r.squared, "\n")
+```
+As you can see the transformed regression fits the data slightly better than the previous lm2 model based on the values from adjusted $R^2$.
+
+### load new package
+```{r}
+library(lmtest)
+```
+
+## Ramsey Rest Test
+```{r}
+reset_test <- resettest(lm2.transformed, power = 2:3, type = "fitted")
+```
+
+```{r}
+print(reset_test)
+```
+
+Based on the results of the Ramsey Reset Test the model is correctly specified. 
