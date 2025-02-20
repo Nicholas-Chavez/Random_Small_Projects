@@ -1,0 +1,176 @@
+---
+title: "Regression_Analysis_Mtcars"
+author: "Nicholas Chavez"
+format: pdf
+---
+
+### Load Packages
+```{r}
+library(tidyverse)
+```
+
+## Objective: Use the mtcars data set to find the best regression to predict miles per gallon
+
+```{r}
+pairs(mpg ~ ., data = mtcars)
+```
+When looking at the combinations of graphs we can see potential relationships. There are negative linear associations with mpg and the following variables:
+cyl: Number of cylinders
+disp: Displacement
+hp: Gross horsepower 
+carb: Number of carburetors
+wt: Weight (1000 lbs)
+There also seems to be potential correlation with drat (Rear axle ratio)and qsec (1/4 mile time)but they aren't as apparent. 
+
+## Double checking weaker associations:
+### qsec: 1/4 mile time
+
+```{r}
+ggplot(mtcars, aes(qsec, mpg))+ 
+  geom_point()+
+  geom_smooth(method = "lm")
+```
+
+There is a positive association however the points do have a bit of heteroscedasticity.
+### drat: Rear axle ratio
+
+```{r}
+ggplot(mtcars, aes(drat, mpg))+ 
+  geom_point()+
+  geom_smooth(method = "lm")
+```
+Now that potential relationships can be seen visually, I will use backwards elimination to determine which models are worth testing due to having statistical significance.
+
+```{r}
+lm1 <- lm (mpg~., data = mtcars)
+lm2 <- update(lm1, ~.-cyl)
+lm3 <- update(lm2,~.-vs)
+lm4 <- update(lm3,~.-carb)
+lm5 <- update(lm4,~.-gear)
+lm6 <- update(lm5,~.-drat)
+lm7 <- update(lm6,~.-disp)
+lm8 <- update(lm7,~.-hp)
+summary(lm8)
+```
+After conducting backwards elimination, It was found that wt, qsec, and am are all statistically significant. So I will now create 3 regressions.
+lm_1: regression with only the most statistically significant variable, wt (weight).
+lm_2: regression with the two most statistically significant variables, wt (weight) and qsec (1/4 mile time).
+lm_3: regression with the three most significant variables, wt(weight), qsec(1/4 mile time), and am(Transmission type, automatic or manual)
+
+```{r}
+lm_1 <- lm(mpg~wt, data = mtcars)
+lm_2 <- lm(mpg~wt + qsec, data = mtcars)
+lm_3 <- lm(mpg~wt + qsec + am, data = mtcars)
+```
+
+### Cross Validation: 
+
+In order to determine which type of cross validation method I will use, I will double check a condition:
+```{r}
+nrow(mtcars)*0.3
+```
+due to mtcars being a smaller data set where the test set will only be 9.6 observations if only conducting a validation set approach, I will be using a 10-fold Cross-validation instead.
+
+```{r}
+library(caret)
+```
+
+# Create models and determine RMSE:
+cv_model1 for lm_1,
+cv_model2 for lm_2,
+and cv_model3 for lm_3.
+
+
+```{r}
+set.seed(123)
+cv_model1 <- train(mpg ~ wt, 
+                   data = mtcars,
+                   method = "lm",
+                   trControl = trainControl(method = "cv", number = 10))
+cv_model1
+```
+```{r}
+set.seed(123)
+cv_model2 <- train(mpg~wt+qsec,
+                   data = mtcars,
+                   method = "lm",
+                   trControl = trainControl(method = "cv", number = 10))
+cv_model2
+```
+
+```{r}
+set.seed(123)
+cv_model3 <- train(mpg~wt+qsec+am,
+                   data = mtcars,
+                   method = "lm",
+                   trControl = trainControl(method = "cv", number = 10)
+)
+cv_model3
+                  
+```
+After conducting 10-fold validation, it was found that lm_2 (the regression with wt and qsec as variables) is the best predictor. Now I will run a diagostic test on the variable to see if the model follows ols assumptions the best.
+
+### Diagnostic plots
+
+```{r}
+plot(lm_2)
+```
+After viewing the diagnostic plots, the assumptions are not fully met. to fix some of these issues I will run a Box-Cox transformation.
+
+```{r}
+library(MASS)
+```
+
+```{r}
+bc <- boxcox(lm_2, lamda = seq(-3,3))
+best.lam <- bc$x[which(bc$y == max(bc$y))]
+```
+## Transform the regression
+```{r}
+print(best.lam)
+```
+since lambda is close to 0 then we can assume the dependent variable to be log(mpg).
+```{r}
+summary(lm_2)
+```
+
+```{r}
+lm_2.transformed <- lm(log(mpg)~wt+qsec, data = mtcars)
+summary(lm_2.transformed)
+```
+Note that qsec became even more statistically significant.
+
+### run a diagnostic on new transformed regression
+```{r}
+plot(lm_2.transformed)
+```
+The assumptions are not perfect but they are better, which is conformed visually. lets compare the models directly through their $R^2$ values. 
+
+```{r}
+#compare model preformance
+cat("Original Model - Adjusted R-squared:", summary(lm_2)$adj.r.squared, "\n")
+cat("Transformed Model - Adjusted R-squared:", summary(lm_2.transformed)$adj.r.squared, "\n")
+```
+The $R^2$ for the transformed model is a better fit. In lm_2.tranformed, Wt and qsec explains for 85.79% of the variability in mpg. 
+
+Now I will conduct a ramsey reset test to check for misspecification.
+
+```{r}
+library(lmtest)
+```
+
+```{r}
+reset_test <- resettest(lm_2.transformed, power = 2:3, type = "fitted")
+print(reset_test)
+```
+In conclusion the p-value is above relative significant levels of 0.1, 0.05, and 0.01. Therefore we fail to reject the null hypothesis that this lm_2.transformed is misspecified, and find that the regression is not misspecified. 
+
+Relationship regression:
+
+```{r}
+summary(lm_2.transformed)
+```
+
+$Log(mpg) = 2.989 - 0.258Wt + 0.045QSEC$
+
+Interpretation: a 1000 lb increase in weight is associated with a 25.8% decreasing in Miles per gallon. Also, a decrease in quarter mile time by 1 unit is associated with a 4.5% increase in miles per gallon.
