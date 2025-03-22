@@ -1,0 +1,52 @@
+---
+title: "Classification Trees Penguins"
+author: "Nicholas Chavez"
+format: pdf
+---
+### Load Packages
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+library(rpart)
+```
+### Data Clean
+```{r}
+pen2 <- penguins |> 
+  dplyr::select(species, flipper_length_mm, bill_length_mm) |> 
+  drop_na()
+```
+### Plot
+```{r}
+ggplot(pen2, aes( x= bill_length_mm, y = flipper_length_mm, color = species)) + 
+  geom_point() +
+  labs(x = "Bill Length (MM)", y = "Flipper Length (MM)", title = "Penguins")
+```
+Observations: Based on the graph we can see that Adelie Penguins have both lower bill and flipper lengths than the two other species. Chinstrap have higher Bill Length but relatively lower flipper length. Gentoo have higher flipper length but bill length is similar to chinstrap.
+
+### Data Splitting:
+```{r}
+set.seed(111)
+n <- nrow(pen2)
+train_index <- sample(1:n, size = round(n*0.7))
+pen_train <- pen2[train_index,]
+pen_test <- pen2[-train_index,]
+```
+### Classification Tree:
+```{r}
+pen_tree <- rpart(species ~ flipper_length_mm + bill_length_mm, 
+                  data = pen_train, method = "class")
+par(cex = 0.7, xpd = NA)
+plot(pen_tree)
+text(pen_tree, use.n = TRUE)
+```
+### Test Accuracy of prediction from classification tree:
+```{r}
+pen_predictions <- predict(pen_tree, newdata = pen_test, type = "class")
+c_matrix <- table(predicted = pen_predictions, actual = pen_test$species)
+addmargins(c_matrix)
+```
+Accuracy:
+```{r}
+(42+22+34)/103
+```
+The accurary of this predictor is about 95%. 
