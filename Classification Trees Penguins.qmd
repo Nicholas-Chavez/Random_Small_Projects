@@ -21,7 +21,7 @@ ggplot(pen2, aes( x= bill_length_mm, y = flipper_length_mm, color = species)) +
   geom_point() +
   labs(x = "Bill Length (MM)", y = "Flipper Length (MM)", title = "Penguins")
 ```
-Observations: Based on the graph we can see that Adelie Penguins have both lower bill and flipper lengths than the two other species. Chinstrap have higher Bill Length but relatively lower flipper length. Gentoo have higher flipper length but bill length is similar to chinstrap.
+Observations: Based on the graph we can see that Adelie Penguins have both lower bill and flipper lengths than the two other species. Chinstraps have higher Bill Length but relatively lower flipper length. Gentoos have higher flipper length but bill length is similar to chinstrap.
 
 ### Data Splitting:
 ```{r}
