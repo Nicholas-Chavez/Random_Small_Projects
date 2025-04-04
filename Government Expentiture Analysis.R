@@ -1,7 +1,7 @@
-# This is an analysis on Data from the UNCTAD and Our World in data for Depression Rates and Government Expenditures in multiple different sectors.
-# This data was wrangled in SQL. Code for wrangling is available in GitHUb with labeled "Mental_Health_Government_Spending_Wrangling.sql"
+# This is an analysis of Data from the UNCTAD and Our World in data for Depression Rates and Government Expenditures in multiple different sectors.
+# This data was wrangled in SQL. Code for wrangling is available in GitHub labeled "Mental_Health_Government_Spending_Wrangling.sql"
 
-# data available to download on Kaggle
+# Data available to download on Kaggle
 # UNCTAD: https://www.kaggle.com/datasets/adamgrey88/world-governments-expenditure-dataset-2000-2021
 # Our World in Data: https://www.kaggle.com/datasets/thedevastator/uncover-global-trends-in-mental-health-disorder/data
 
@@ -40,8 +40,8 @@ lm16 <- update(lm15,~.-Social_protection)
 lm17 <- update(lm16,~.-Other_industries)
 summary(lm17)
 
-# Through variable selection it was determine that the two most statistically significant variables for Depression percentage
-# are Education expense and Public Order and Safety expense. Public order and safety has a negative correlation and Education has as positive correlation.
+# Through variable selection it was determined that the two most statistically significant variables for Depression percentage
+# are Education expense and Public Order and Safety expense. Public order and safety have a negative correlation and Education has a positive correlation.
 
 #Graphing the variables
 ggplot(wel_data, aes(x = Education, y = Public_order_and_safety, color = Depression_Per)) +
@@ -60,16 +60,16 @@ ggplot(wel_data, aes(x = Public_order_and_safety, y = Depression_Per)) +
 
 # when looking at the individual graphs of the relationship between depression rates and the variables a trend can be observed.
 # When both expenses are low we see that depression rates have a higher range and allow for depression rates below 3 percent.
-# However when the both expenses begin to increase the depression rates stay above 3 percent.
-# There could be multiple reasons for this however one potential reason could be that when a country has lower resources
-# The ability to collect data for depression rate or define depression could be hindered leading to lower observed rates. However more research is needed to confirm this claim. 
+# However when both expenses begin to increase the depression rates stay above 3 percent.
+# There could be multiple reasons for this however one potential reason could be that when a country has fewer resources
+# The ability to collect data for depression rates or define depression could be hindered leading to lower observed rates. However, more research is needed to confirm this claim. 
 
 #==============================================================================
 #   2. Conclusion
 #==============================================================================
 
 # The data is not sufficient for determining a relationship between expense and depression rates.
-# In future analysis It might be beneficial to find a different sources of government expenditures or even combine sectors that have similarities in what they provide to determine a relationship.
+# In future analysis It might be beneficial to find different sources of government expenditures or even combine sectors that have similarities in what they provide to determine a relationship.
 # Also this data was focused on 2017. Potentially a different focus year could lead to different results.
-# Additional events and countries circumstance also different country to country. If analysis is redone potentially including a fix effects model
+# Additional events and country circumstances also differ from country to country. If the analysis is redone potentially including a fix effects model
 # could lead to better insights of effects. 
