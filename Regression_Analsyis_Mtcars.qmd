@@ -20,7 +20,7 @@ disp: Displacement
 hp: Gross horsepower 
 carb: Number of carburetors
 wt: Weight (1000 lbs)
-There also seems to be potential correlation with drat (Rear axle ratio)and qsec (1/4 mile time)but they aren't as apparent. 
+There also seems to be a potential correlation with drat (Rear axle ratio)and qsec (1/4 mile time)but they aren't as apparent. 
 
 ## Double checking weaker associations:
 ### qsec: 1/4 mile time
@@ -52,7 +52,7 @@ lm7 <- update(lm6,~.-disp)
 lm8 <- update(lm7,~.-hp)
 summary(lm8)
 ```
-After conducting backwards elimination, It was found that wt, qsec, and am are all statistically significant. So I will now create 3 regressions.
+After conducting backward elimination, It was found that wt, qsec, and am are all statistically significant. So I will now create 3 regressions.
 lm_1: regression with only the most statistically significant variable, wt (weight).
 lm_2: regression with the two most statistically significant variables, wt (weight) and qsec (1/4 mile time).
 lm_3: regression with the three most significant variables, wt(weight), qsec(1/4 mile time), and am(Transmission type, automatic or manual)
@@ -65,7 +65,7 @@ lm_3 <- lm(mpg~wt + qsec + am, data = mtcars)
 
 ### Cross Validation: 
 
-In order to determine which type of cross validation method I will use, I will double check a condition:
+To determine which type of cross-validation method I will use, I will double-check a condition:
 ```{r}
 nrow(mtcars)*0.3
 ```
@@ -108,7 +108,7 @@ cv_model3 <- train(mpg~wt+qsec+am,
 cv_model3
                   
 ```
-After conducting 10-fold validation, it was found that lm_2 (the regression with wt and qsec as variables) is the best predictor. Now I will run a diagostic test on the variable to see if the model follows ols assumptions the best.
+After conducting 10-fold validation, it was found that lm_2 (the regression with wt and qsec as variables) is the best predictor. Now I will run a diagnostic test on the variable to see if the model follows OLS assumptions the best.
 
 ### Diagnostic plots
 
@@ -140,20 +140,20 @@ summary(lm_2.transformed)
 ```
 Note that qsec became even more statistically significant.
 
-### run a diagnostic on new transformed regression
+### Run a diagnostic on newly transformed regression
 ```{r}
 plot(lm_2.transformed)
 ```
 The assumptions are not perfect but they are better, which is conformed visually. lets compare the models directly through their $R^2$ values. 
 
 ```{r}
-#compare model preformance
+#compare model performance
 cat("Original Model - Adjusted R-squared:", summary(lm_2)$adj.r.squared, "\n")
 cat("Transformed Model - Adjusted R-squared:", summary(lm_2.transformed)$adj.r.squared, "\n")
 ```
-The $R^2$ for the transformed model is a better fit. In lm_2.tranformed, Wt and qsec explains for 85.79% of the variability in mpg. 
+The $R^2$ for the transformed model is a better fit. In lm_2.transformed, Wt and qsec explain 85.79% of the variability in mpg. 
 
-Now I will conduct a ramsey reset test to check for misspecification.
+Now I will conduct a Ramsey reset test to check for misspecification.
 
 ```{r}
 library(lmtest)
@@ -163,7 +163,7 @@ library(lmtest)
 reset_test <- resettest(lm_2.transformed, power = 2:3, type = "fitted")
 print(reset_test)
 ```
-In conclusion the p-value is above relative significant levels of 0.1, 0.05, and 0.01. Therefore we fail to reject the null hypothesis that this lm_2.transformed is misspecified, and find that the regression is not misspecified. 
+In conclusion, the p-value is above relative significant levels of 0.1, 0.05, and 0.01. Therefore we fail to reject the null hypothesis that this lm_2.transformed is misspecified and find that the regression is not misspecified. 
 
 Relationship regression:
 
@@ -173,4 +173,4 @@ summary(lm_2.transformed)
 
 $Log(mpg) = 2.989 - 0.258Wt + 0.045QSEC$
 
-Interpretation: a 1000 lb increase in weight is associated with a 25.8% decreasing in Miles per gallon. Also, a decrease in quarter mile time by 1 unit is associated with a 4.5% increase in miles per gallon.
+Interpretation: a 1000 lb increase in weight is associated with a 25.8% decrease in Miles per gallon. Also, a decrease in quarter-mile time by 1 unit is associated with a 4.5% increase in miles per gallon.
