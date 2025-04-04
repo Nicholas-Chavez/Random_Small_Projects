@@ -1,4 +1,4 @@
--- Import data from world expentitures from UNCTAD and data for depression/anxiety rates from ourworldindata --
+-- Import data from world expenses from UNCTAD and data for depression/anxiety rates from ourworldindata --
 -- Flip data so that countries condense for one row per distinct country and sectors become rows--
 CREATE VIEW Government_Spending As
 WITH CTE as
