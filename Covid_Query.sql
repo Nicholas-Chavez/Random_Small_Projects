@@ -1,5 +1,5 @@
--- Data we will be using: Notes that the data being used is Covid Data collected by Johns Hopkins University
--- Johns Hopkins University stopped collected covid data as of 03/10/2023
+-- Data: The data being used is Covid Data collected by Johns Hopkins University
+-- Johns Hopkins University stopped collecting covid data as of 03/10/2023
 
 SELECT location, date, total_cases, new_cases, total_deaths, population
 FROM PortfolioProject.dbo.CovidDeaths
@@ -15,7 +15,7 @@ ON cou.Country = covid.location
 WHERE total_cases is not null and total_deaths is not null and location like '%states%'
 ORDER BY DeathCaseRatio desc
 
--- Looking at countries with the heighest infection rate
+-- Looking at countries with the highest infection rate
 
 SELECT location, population, MAX(total_cases) as Infections, 
 MAX((total_cases/population))*100 as InfectionRate
@@ -26,7 +26,7 @@ WHERE total_cases is not null and population is not null
 GROUP BY location, population
 ORDER BY 4 DESC;
 
--- Showing the countries with the heighest deathcount per population
+-- Showing the countries with the highest death count per population
 
 SELECT location, population, MAX(CAST(total_deaths as int)) as TotalDeathCount, 
 MAX((total_deaths/population)) as DeathPercentage
@@ -37,7 +37,7 @@ WHERE total_deaths is not null and total_cases is not null
 GROUP BY location, population
 ORDER BY TotalDeathCount DESC
 
--- Lets seperate by continent
+-- Lets separate by continent
 
 SELECT continent, MAX(CAST(total_deaths as int)) as TotalDeathCount
 FROM PortfolioProject..CovidDeaths as Covid
@@ -45,7 +45,7 @@ WHERE continent is not null
 GROUP BY continent
 ORDER BY TotalDeathCount DESC
 
--- Looking at the total percentage of the population effected
+-- Looking at the total percentage of the population affected
 
 WITH CTE_Cases AS
 (
@@ -61,7 +61,7 @@ SELECT SUM(population) as World_Population, SUM(HeighestNumberOFCases) as World_
 (SUM(HeighestNumberOFCases)/SUM(population))*100 as Population_effected
 FROM CTE_Cases
 
--- Global Death to Case ratio
+-- Global Death-to-case ratio
 
 SELECT date, SUM(CAST(new_cases as int)) as TotalCases, SUM(CAST(new_deaths as int)) as TotalDeaths, 
 SUM(CAST(new_deaths as int))/SUM(new_cases)*100 as DeathRate
@@ -112,7 +112,7 @@ SELECT *,
 ROUND((PeriodicTotalVaccinations/Population)*100,3) as PeriodicPercentageOfPopulation
 FROM #PercentPopulationVaccinated
 
--- Creating View to store data for later visualizations
+-- Creating a View to store data for later visualizations
 
 -- VIEW 1
 
