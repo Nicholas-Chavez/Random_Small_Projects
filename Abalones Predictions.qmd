@@ -1,0 +1,147 @@
+---
+title: "Project 1"
+author: "Nicholas Chavez"
+format: pdf
+---
+Load Packages
+```{r}
+library(tidyverse)
+library(rpart)
+library(randomForest)
+library(vip)
+library(AppliedPredictiveModeling)
+library(caret)
+```
+Reading Data
+```{r}
+data("abalone")
+view(abalone)
+```
+
+Part 1: Exploratory Data Analysis
+```{r}
+summary(abalone)
+```
+```{r}
+rf1 <- randomForest(Rings~., data = abalone, importance = TRUE)
+rf1
+```
+```{r}
+vip(rf1, num_feature = 8, geom = "point", include_type = TRUE)
+```
+```{r}
+ggplot(data = abalone, aes(ShuckedWeight,Rings, color = Type))+
+  geom_point(size = 0.5, alpha = 0.5) +
+  labs(title = "ShuckedWeight Vs. Rings")
+```
+
+```{r}
+plot(abalone)
+```
+Notes: There seems to be a fan pattern for many variables related with rings just as I saw with shellweight, however Rings and Height seem to have a more unique pattern. 
+```{r}
+ggplot(data = abalone, aes(Height, Rings))+
+  geom_point()+
+  labs(title = "Height Vs. Rings")
+```
+```{r}
+ggplot(abalone, aes(ShellWeight, Rings, color = Type))+
+  geom_point()
+```
+Description: 
+ Based on the variable importance vector from running a random forest I found that the most important variables to the number of Rings were Shucked Weight and Type. Looking at the graph for Shucked Weight Vs. Rings we can see a fan pattern but a relatively positive correlation. Indicating that as weight increases so does the number of Rings just with increasing variability as well. Also when plotting the type in the same graph I saw that infants were heavily concentrated with lower rings and lower shucked weights. Also, females and males are very mixed among the higher Rings and Shucked Weights. Despite that, infants can vary and be amount the higher shucked weight and rings, which could indicate that rings might not have to do with specific ages. As shucked weights increase past 1.25 the rings range between 14 and 9 rings while reducing the shucked weight leads to higher variability. As Height increases the number of rings increases. There is also a positive relationship between Shell Weight and Rings. Which visibly seems more correlated than Shucked Weight. Although higher shucked weights are associated with ring values between 9 rings and 14 rings, when looking at shell weight the rings continue to increase not converging toward a range. 
+
+Part 2: Cross-Validation
+```{r}
+set.seed(123)
+n <- nrow(abalone)
+train_index<-sample(1:n, size = round(n*0.7))
+aba_train <- abalone[train_index, ]
+aba_test <- abalone[-train_index, ]
+
+```
+Linear Regression 
+```{r}
+lm1 <- lm(Rings~., data = aba_train)
+summary(lm1)
+```
+Regression Tree
+```{r}
+t1 <- rpart(Rings~., data = aba_train, method = "anova")
+par(cex = 0.5, xpd=NA)
+plot(t1)
+text(t1, use.n = TRUE)
+```
+Random Forest 
+```{r}
+rf1 <- randomForest(Rings~., data = aba_train)
+```
+```{r}
+rf1
+vip(rf1, num_features = 8, geom = "point", include_type = TRUE)
+```
+
+Predictions
+```{r}
+pred_lm <- predict(lm1, newdata=aba_test)
+pred_t <- predict(t1, newdata = aba_test)
+pred_rf <-  predict(rf1, newdata = aba_test)
+```
+
+```{r}
+RMSE <- function(y,y_hat){
+  sqrt(mean((y-y_hat)^2))
+}
+```
+
+```{r}
+RMSE(aba_test$Rings,pred_lm)
+RMSE(aba_test$Rings, pred_t)
+RMSE(aba_test$Rings, pred_rf)
+```
+```{r}
+metrics <- postResample(pred = pred_t, obs = aba_test$Rings)
+print(metrics)
+```
+
+For the lm model the RMSE is 2.29 and $R^2 = 0.54$, the Regression Tree model has a RMSE of 2.40 and $R^2 = 0.44$, and the random forest has a RMSE of 2.11 and $R^2 = 0.55$. The random forest resulted in the highest $R^2$ values and the lowest RMSE. The Regression tree model resulted in the lowest $R^2$ and the highest RMSE.
+
+Plotting Prediction Accuracy:
+```{r}
+pred_df <- data.frame(
+  Actual = aba_test$Rings,
+  Pred_LM = pred_lm,
+  Pred_T = pred_t,
+  Pred_RF = pred_rf
+)
+```
+
+Linear Model
+```{r}
+ggplot(pred_df, aes(Actual,Pred_LM))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1) +
+  labs(x= "Actual Rings", y = "Predicted Rings", title = "Linear Model")+
+  xlim(0,25) + ylim(0,30) 
+```
+Regression Tree Model
+```{r}
+ggplot(pred_df, aes(Actual,Pred_T))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  labs(x = "Actual Rings", y = "Predicted Rings", 
+       title = "Regression Tree Model") +
+  xlim(0,25) + ylim(0,30) 
+```
+Random Forest
+```{r}
+ggplot(pred_df, aes(Actual, Pred_RF))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  labs(x = "Actual Rings", y = "Predicted Rings", 
+       title = "Random Forest Model")+
+  xlim(0,25)+ylim(0,30)
+```
+
+The tree model looks different than the other two models because the predictions vary more. For Example, when the actual number of rings is 10 the linear and Random forest models predict more values that are closer to the actual value and the 1-1 line. However, the regression tree model's predictions can take a larger range of values. This has to do with the fact that the single regression tree has a higher RMSE and MSE. The higher the error the more the points will vary around the 1-1 line on the actual vs. predicted graphs.
+
